@@ -15,8 +15,12 @@ async def on_ready():
 
 @aiocron.crontab('0 9 * * *')
 async def create_daily_thread():
+    date = datetime.date.today()
+    if (not date.weekday()):
+        return
+    
     thread_parent = client.get_channel(channel_id)
-    thread_name = generate_thread_name()
+    thread_name = generate_thread_name(date)
 
     print(f'Got channel {thread_parent}')
 
@@ -24,8 +28,7 @@ async def create_daily_thread():
     thread = await thread_parent.create_thread(name=thread_name, message=thread_start_message)
     await thread.send(f'<@&{role_id}>')
 
-def generate_thread_name():
-    date = datetime.date.today()
+def generate_thread_name(date):
     dateformatted = str(date).replace('-', '.')
     name = '{0} Update'.format(dateformatted)
     return name
