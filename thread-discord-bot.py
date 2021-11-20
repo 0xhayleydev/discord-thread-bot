@@ -13,7 +13,7 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     create_daily_thread.start()
 
-@aiocron.crontab('* * * * *')
+@aiocron.crontab('0 9 * * *')
 async def create_daily_thread():
     thread_parent = client.get_channel(channel_id)
     thread_name = generate_thread_name()
