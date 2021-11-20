@@ -5,7 +5,7 @@ client = discord.Client()
 token = open('token.txt', 'r').read()
 template = open('template.txt', 'r').read()
 
-channel_id = 868379994710224938
+channel_id = 898154481894694932
 role_id = 885847934619512833
 
 @client.event
