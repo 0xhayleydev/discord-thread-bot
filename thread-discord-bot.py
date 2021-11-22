@@ -27,7 +27,7 @@ async def on_ready():
 @aiocron.crontab('0 9 * * *')
 async def create_daily_thread():
     date = datetime.date.today()
-    if (not date.weekday()):
+    if (date.weekday() in [5, 6]):
         return
     
     thread_parent = client.get_channel(channel_id)
