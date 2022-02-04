@@ -26,6 +26,15 @@ async def on_ready():
 """create a daily thread at 9am on weekdays (using cron)"""
 @aiocron.crontab('0 9 * * *')
 async def create_daily_thread():
+    f = open('previous_id.txt', 'r')
+    previous_id = f.read()
+    f.close()
+
+    if (previous_id != ""):
+        previous_id = int(previous_id)
+        previous_thread = client.get_channel(previous_id)
+        await previous_thread.edit(archived = True)
+
     date = datetime.date.today()
     if (date.weekday() in [5, 6]):
         return
@@ -38,6 +47,9 @@ async def create_daily_thread():
     thread_start_message = await thread_parent.send(template)
     thread = await thread_parent.create_thread(name=thread_name, message=thread_start_message)
     await thread.send(f'<@&{role_id}>')
+    f = open('previous_id.txt', 'w')
+    f.write(str(thread.id))
+    f.close()
 
 """create a thread name from the date"""
 def generate_thread_name(date):
