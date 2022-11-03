@@ -60,7 +60,7 @@ class bot_client(discord.Client):
             await tree.sync()
             self.synced = True
         print(f"I am {self.user}.")
-        aiocron.crontab("0 0 * * 1-5", func=create_daily_threads, start=True)
+        aiocron.crontab("0 9 * * 1-5", func=create_daily_threads, start=True)
         
 client = bot_client()
 tree = app_commands.CommandTree(client)
