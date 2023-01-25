@@ -6,15 +6,18 @@ import datetime
 import json
 import aiocron
 
+# class which stores information about the guild
 class ServerInfo:
-    def __init__(self, save_data: bool, guild, channel = "", role = "", last_thread = ""):
-        self.guild = str(guild)
+    def __init__(self, save_data: bool, guild: str, channel: str, role: str, last_thread: str, message: str, cron: str):
+        self.guild = guild
         if save_data:
-            self.channel = str(channel)
-            self.role = str(role)
-            self.last_thread = str(last_thread)
+            self.channel = channel
+            self.role = role
+            self.last_thread = last_thread
             self.saveToJSON()
             self.exists = True
+            self.message = message
+            self.cron = cron
         else:
             self.loadFromJSON()
         
@@ -60,20 +63,22 @@ class bot_client(discord.Client):
             await tree.sync()
             self.synced = True
         print(f"I am {self.user}.")
-        aiocron.crontab("0 9 * * 1-5", func=create_daily_threads, start=True)
         
 client = bot_client()
 tree = app_commands.CommandTree(client)
 
-async def create_daily_threads():
+async def start_all_crons():
     for i in range(len(client.guilds)):
         server_info = ServerInfo(False, client.guilds[i].id)
-        if (server_info.exists == True):
-            thread = await create_thread(server_info.guild, server_info.channel, server_info.role)
-            print(server_info.last_thread)
-            await close_thread(server_info.guild, server_info.last_thread)
-            server_info.last_thread = str(thread.id)
-            server_info.saveToJSON()
+        aiocron.crontab(server_info.cron, func=create_daily_thread, args=(server_info.guild), start=True)
+
+async def create_daily_thread(guild):
+    if (guild.exists == True):
+        thread = await create_thread(guild.guild, guild.channel, guild.role)
+        print(guild.last_thread)
+        await close_thread(guild.guild, guild.last_thread)
+        guild.last_thread = str(thread.id)
+        guild.saveToJSON()
 
 def get_discord_channel(guild_id, channel_id):
     channel = client.get_guild(int(guild_id)).get_channel_or_thread(int(channel_id))
@@ -99,23 +104,29 @@ def get_thread_name():
     thread_name = f'[{date.day}.{date.month}.{date.year}] Update'
     return thread_name
 
-async def create_template_post(interaction, channel, role):
+async def create_template_post(interaction, channel, role, cron):
     await interaction.response.send_message(f"Working...", ephemeral = True)
     thread = await create_thread(interaction.guild.id, channel.id, role.id)
-    await interaction.edit_original_response(content=f"I will ping <@&{role.id}> in <#{channel.id}>")
+    await interaction.edit_original_response(content=f"I will ping <@&{role.id}> in <#{channel.id}> with cron: {cron}")
     return thread
 
 # COMMANDS
-@tree.command(name = "scrum", description = "Setup the scrum message in the specified channel.")
+@tree.command(name = "scrum_legacy", description = "Setup the scrum message in the specified channel.")
 async def self(interaction: discord.Interaction, channel: discord.ForumChannel, role: discord.Role):
-    thread = await create_template_post(interaction, channel, role)
+    thread = await create_template_post(interaction, channel, role, "0 9 * * 1-5")
     server_info = ServerInfo(True, interaction.guild.id, channel.id, role.id, thread.id)
     server_info.loadFromJSON()
 
-@tree.command(name = "test", description = "Test the bot.", guild = discord.Object(id = 713118191697788974))
+@tree.command(name = "scrum", description = "Setup the scrum message in the specified channel with a specific cron.")
+async def self(interaction: discord.Interaction, channel: discord.ForumChannel, role: discord.Role, cron: str):
+    thread = await create_template_post(interaction, channel, role, cron)
+    server_info = ServerInfo(True, interaction.guild.id, channel.id, role.id, thread.id)
+    server_info.loadFromJSON()
+
+@tree.command(name = "test", description = "Test the bot.")
 async def self(interaction: discord.Interaction):
     server_info = ServerInfo(False, interaction.guild.id)
-    await create_daily_threads()
+    await create_daily_thread()
     await interaction.response.send_message(f"Request Sent", ephemeral = True)
     server_info.loadFromJSON()
     
