@@ -89,7 +89,9 @@ async def create_thread(guild_id, channel_id, role_id):
     channel = get_discord_channel(guild_id, channel_id)
     thread_with_message = await channel.create_thread(name=thread_name, content=scrum_message)
     thread = thread_with_message.thread
-    await thread.send(f"<@&{role_id}>\n\nPLEASE NOTE: Bot is in BETA. Please contact hayley#1811 (<@175635927954227200>) if you have any issues or suggestions.")
+    await thread.send(f"""<@&{role_id}>\n\nPLEASE NOTE: Bot is in BETA. Please contact hayley#1811 (<@175635927954227200>) if you have any issues or suggestions.
+    
+    Over the next few day the bot will be updated which may break pings in your server. For assistance in resolving this, please contact, hayley#1811""")
     return thread
 
 def get_thread_name():
